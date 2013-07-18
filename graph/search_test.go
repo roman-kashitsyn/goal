@@ -16,19 +16,17 @@ func newTraverser(n int, t *testing.T) *recordingTraverser {
 	return &recordingTraverser{o, p, t}
 }
 
-func (t *recordingTraverser) OnEnter(c *Context, v Vertex) bool {
+func (t *recordingTraverser) OnEnter(c *Context, v Vertex) {
 	t.order = append(t.order, v)
 	if !c.IsDiscovered(v) {
 		t.test.Fatalf("Expected vertex %d to be discovered on enter", v)
 	}
-	return true
 }
 
-func (t *recordingTraverser) OnEdge(c *Context, x, y Vertex) bool {
-	return true
+func (t *recordingTraverser) OnEdge(c *Context, x, y Vertex) {
 }
 
-func (t *recordingTraverser) OnExit(c *Context, v Vertex) bool {
+func (t *recordingTraverser) OnExit(c *Context, v Vertex) {
 	if !c.IsDiscovered(v) {
 		t.test.Fatalf("Expected vertex %d to be discovered on exit", v)
 	}
@@ -36,7 +34,6 @@ func (t *recordingTraverser) OnExit(c *Context, v Vertex) bool {
 		t.test.Fatalf("Expected vertex %d to be processed on exit", v)
 	}
 	t.parents[v] = c.ParentOf(v)
-	return true
 }
 
 func (t *recordingTraverser) OnFinish(c *Context) {}
@@ -58,7 +55,7 @@ func TestBreadthFirstSearch(t *testing.T) {
 	// 0 -- 1 -- 2
 	// \    |
 	// \--- 3 -- 4
-	g := NewAdjacencyList(5, true)
+	g := NewAdjacencyList(5, false)
 	g.AddEdge(0, 1).AddEdge(1, 2).AddEdge(1, 3)
 	g.AddEdge(0, 3).AddEdge(3, 4)
 	trav := newTraverser(g.NumVertices(), t)
@@ -72,7 +69,7 @@ func TestDepthFirstSearch(t *testing.T) {
 	// 0 -- 2 -- 4 --- 1
 	// \         |    |
 	// \--- 5 -- 3 --|
-	g := NewAdjacencyList(6, true)
+	g := NewAdjacencyList(6, false)
 	g.AddEdge(0, 2).AddEdge(2, 4).AddEdge(4, 1).AddEdge(4, 3)
 	g.AddEdge(0, 5).AddEdge(5, 3).AddEdge(3, 1)
 	trav := newTraverser(g.NumVertices(), t)

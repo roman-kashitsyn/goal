@@ -16,9 +16,9 @@ type Context struct {
 }
 
 type Traverser interface {
-	OnEnter(c *Context, v Vertex) bool
-	OnEdge(c *Context, x, y Vertex) bool
-	OnExit(c *Context, v Vertex) bool
+	OnEnter(c *Context, v Vertex)
+	OnEdge(c *Context, x, y Vertex)
+	OnExit(c *Context, v Vertex)
 	OnFinish(c *Context)
 }
 
@@ -43,7 +43,7 @@ func (al *AdjacencyList) addSingleEdge(x, y Vertex) {
 
 func (al *AdjacencyList) AddEdge(x, y Vertex) *AdjacencyList {
 	al.addSingleEdge(x, y)
-	if al.directed {
+	if !al.directed {
 		al.addSingleEdge(y, x)
 	}
 	return al

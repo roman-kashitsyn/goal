@@ -16,14 +16,11 @@ func BreadthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
 
 	for !q.Empty() {
 		v := q.Dequeue().(Vertex)
-		if !t.OnEnter(c, v) {
-			return c
-		}
+		t.OnEnter(c, v)
+
 		for _, a := range g.AdjacentOf(v) {
 			if !c.processed[a] || directed {
-				if !t.OnEdge(c, v, a) {
-					return c
-				}
+				t.OnEdge(c, v, a)
 			}
 			if !c.discovered[a] {
 				q.Enqueue(a)
@@ -32,44 +29,36 @@ func BreadthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
 			}
 		}
 		c.processed[v] = true
-		if !t.OnExit(c, v) {
-			return c
-		}
+		t.OnExit(c, v)
 	}
 
 	t.OnFinish(c)
 	return c
 }
 
-func dfs(g Graph, v Vertex, t Traverser, c *Context) {
-	c.discovered[v] = true
-	if !t.OnEnter(c, v) {
-		return
+func DfsWithContext(g Graph, v Vertex, t Traverser, c *Context) *Context {
+	if c == nil {
+		c = makeContext(g.NumVertices())
 	}
+
+	c.discovered[v] = true
+	t.OnEnter(c, v)
 
 	for _, a := range g.AdjacentOf(v) {
 		if !c.discovered[a] {
 			c.parents[a] = v
-			if !t.OnEdge(c, v, a) {
-				return
-			}
-			dfs(g, a, t, c)
+			t.OnEdge(c, v, a)
+			DfsWithContext(g, a, t, c)
 		} else if !c.processed[a] || g.IsDirected() {
-			if !t.OnEdge(c, v, a) {
-				return
-			}
+			t.OnEdge(c, v, a)
 		}
 	}
 
 	c.processed[v] = true
-	if !t.OnExit(c, v) {
-		return
-	}
+	t.OnExit(c, v)
+	return c
 }
 
 func DepthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
-	n := g.NumVertices()
-	c := makeContext(n)
-	dfs(g, start, t, c)
-	return c
+	return DfsWithContext(g, start, t, nil)
 }
