@@ -42,6 +42,9 @@ func (t *topSort) OnExit(c *Context, v Vertex) {
 
 func (t *topSort) OnFinish(c *Context) {}
 
+// TopologicalSort accepts direct acyclic graph and returns linear
+// ordering of vertices such that for every directed edge uv from
+// vertex u to vertex v, u comes before v in the ordering.
 func TopologicalSort(dag Graph) (sorted []Vertex, e error) {
 	defer func() {
 		if err := recover(); err != nil {

@@ -33,12 +33,7 @@ func NewAdjacencyList(numVertices int, directed bool) *AdjacencyList {
 }
 
 func (al *AdjacencyList) addSingleEdge(x, y Vertex) {
-	edges := al.vertices[x]
-	if edges == nil {
-		edges = make([]Vertex, 0)
-	}
-	edges = append(edges, y)
-	al.vertices[x] = edges
+	al.vertices[x] = append(al.vertices[x], y)
 }
 
 func (al *AdjacencyList) AddEdge(x, y Vertex) *AdjacencyList {
