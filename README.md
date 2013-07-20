@@ -1,5 +1,6 @@
 Go Algorithms Library (`goal`)
 ==============================
+[![Build Status](https://travis-ci.org/roman-kashitsyn/goal.png)](https://travis-ci.org/roman-kashitsyn/goal)
 
 This is a Go package which implements most popular algorithms
 and data structures.
@@ -9,6 +10,7 @@ Graphs
 * Adjacency lists
 * Extensible breadth-first and depth-first searches
 * Topological sorting
+* Shortest path algorithms
 
 Queues
 ------

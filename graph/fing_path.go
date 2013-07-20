@@ -15,6 +15,12 @@ func (e *NotReachableError) Error() string {
 	return fmt.Sprintf("Vertex %v is not reachable from vertex %v", e.end, e.start)
 }
 
+func WeightByTable(weights [][]int) WeightFunc {
+	return func(x, y Vertex) int {
+		return weights[int(x)][int(y)]
+	}
+}
+
 func buildPath(parents []Vertex, start, end Vertex) []Vertex {
 	n := 0
 	for v := end; v != start; v = parents[v] {
@@ -30,7 +36,7 @@ func buildPath(parents []Vertex, start, end Vertex) []Vertex {
 
 // ShortestPath find shortest path inp a graph assuming weights of
 // all vestices are equal to 1.
-func ShortestPath(g Graph, start, end Vertex) (path []Vertex, err error) {
+func ShortestPath(g Graph, start, end Vertex) (path []Vertex, err *NotReachableError) {
 	c := BreadthFirstSearch(g, start, NoOpTraverser{})
 	if !c.IsDiscovered(end) {
 		return nil, &NotReachableError{start, end}
@@ -41,7 +47,7 @@ func ShortestPath(g Graph, start, end Vertex) (path []Vertex, err error) {
 // DijkstraShortestPath implements Dijkstra's shortest path algorithm.
 //
 // Time complexity: O(|E| + |V|^2) where |V| is number of graph vertices
-func DijkstraShortestPath(g Graph, f, t Vertex, w WeightFunc) (path []Vertex, err error) {
+func DijkstraShortestPath(g Graph, f, t Vertex, w WeightFunc) (path []Vertex, err *NotReachableError) {
 	n := g.NumVertices()
 	visited := make([]bool, n)
 	distance := make([]int, n)
@@ -57,7 +63,7 @@ func DijkstraShortestPath(g Graph, f, t Vertex, w WeightFunc) (path []Vertex, er
 
 		for _, a := range g.AdjacentOf(v) {
 			weight := w(v, a)
-			if distance[a] < distance[v]+weight {
+			if distance[v]+weight < distance[a] {
 				distance[a] = distance[v] + weight
 				parents[a] = v
 			}
