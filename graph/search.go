@@ -5,6 +5,42 @@ import (
 	"fmt"
 )
 
+// Context type represents traversal context. An instance of this type
+// is provided to any traverser during graph traversal.
+type Context struct {
+	parents []Vertex
+	discovered []bool
+	processed []bool
+}
+
+// Traverser represents a type that reacts on events fired during
+// graph traversal.
+type Traverser interface {
+	OnEnter(c *Context, v Vertex)
+	OnEdge(c *Context, x, y Vertex)
+	OnExit(c *Context, v Vertex)
+	OnFinish(c *Context)
+}
+
+func makeContext(numVertices int) *Context {
+	parents := make([]Vertex, numVertices)
+	discovered := make([]bool, numVertices)
+	processed := make([]bool, numVertices)
+	return &Context{parents, discovered, processed}
+}
+
+func (c *Context) ParentOf(v Vertex) Vertex {
+	return c.parents[v]
+}
+
+func (c *Context) IsDiscovered(v Vertex) bool {
+	return c.discovered[int(v)]
+}
+
+func (c *Context) IsProcessed(v Vertex) bool {
+	return c.processed[int(v)]
+}
+
 type NoOpTraverser struct{}
 
 func (t NoOpTraverser) OnEnter(c *Context, v Vertex) {
@@ -35,8 +71,6 @@ func (t PrintingTraverser) OnExit(c *Context, v Vertex) {
 
 func (t PrintingTraverser) OnFinish(c *Context) {
 }
-
-
 
 // BreadthFirstSearch runs breadth-first search on a given graph.
 //

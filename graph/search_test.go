@@ -5,9 +5,9 @@ import (
 )
 
 type recordingTraverser struct {
-	order []Vertex
+	order   []Vertex
 	parents []Vertex
-	test *testing.T
+	test    *testing.T
 }
 
 func newTraverser(n int, t *testing.T) *recordingTraverser {
@@ -53,28 +53,34 @@ func verifySearch(t *testing.T, ord, par []Vertex, trav *recordingTraverser) {
 
 func TestBreadthFirstSearch(t *testing.T) {
 	// 0 -- 1 -- 2
-	// \    |
-	// \--- 3 -- 4
-	g := NewAdjacencyList(5, false)
-	g.AddEdge(0, 1).AddEdge(1, 2).AddEdge(1, 3)
-	g.AddEdge(0, 3).AddEdge(3, 4)
-	trav := newTraverser(g.NumVertices(), t)
-	BreadthFirstSearch(g, 0, trav)
-	expectedOrder := []Vertex{0, 1, 3, 2, 4}
-	expectedParents := []Vertex{0, 0, 1, 0, 3}
-	verifySearch(t, expectedOrder, expectedParents, trav)
+	// |    |
+	// +--- 3 -- 4
+	test := func(g MutableGraph) {
+		g.AddEdge(0, 1).AddEdge(1, 2).AddEdge(1, 3)
+		g.AddEdge(0, 3).AddEdge(3, 4)
+		trav := newTraverser(g.NumVertices(), t)
+		BreadthFirstSearch(g, 0, trav)
+		expectedOrder := []Vertex{0, 1, 3, 2, 4}
+		expectedParents := []Vertex{0, 0, 1, 0, 3}
+		verifySearch(t, expectedOrder, expectedParents, trav)
+	}
+	test(NewAdjacencyList(5, false))
+	test(NewAdjacencyMatrix(5, false))
 }
 
 func TestDepthFirstSearch(t *testing.T) {
 	// 0 -- 2 -- 4 --- 1
-	// \         |    |
-	// \--- 5 -- 3 --|
-	g := NewAdjacencyList(6, false)
-	g.AddEdge(0, 2).AddEdge(2, 4).AddEdge(4, 1).AddEdge(4, 3)
-	g.AddEdge(0, 5).AddEdge(5, 3).AddEdge(3, 1)
-	trav := newTraverser(g.NumVertices(), t)
-	DepthFirstSearch(g, 0, trav)
-	expectedOrder := []Vertex{0, 2, 4, 1, 3, 5}
-	expectedParents := []Vertex{0, 4, 0, 1, 2, 3}
-	verifySearch(t, expectedOrder, expectedParents, trav)
+	// |         |     |
+	// +--- 5 -- 3 ----+
+	test := func(g MutableGraph) {
+		g.AddEdge(0, 2).AddEdge(2, 4).AddEdge(4, 1).AddEdge(4, 3)
+		g.AddEdge(0, 5).AddEdge(1, 3).AddEdge(3, 5)
+		trav := newTraverser(g.NumVertices(), t)
+		DepthFirstSearch(g, 0, trav)
+		expectedOrder := []Vertex{0, 2, 4, 1, 3, 5}
+		expectedParents := []Vertex{0, 4, 0, 1, 2, 3}
+		verifySearch(t, expectedOrder, expectedParents, trav)
+	}
+	test(NewAdjacencyList(6, false))
+	test(NewAdjacencyMatrix(6, false))
 }
