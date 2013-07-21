@@ -6,6 +6,12 @@ import (
 	"testing/quick"
 )
 
+func qc(t *testing.T, f interface{}) {
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+}
+
 func intLess(x, y interface{}) bool {
 	return x.(int) < y.(int)
 }
@@ -47,43 +53,31 @@ func isHeap(h []interface{}) bool {
 	return true
 }
 
-func checkHeapProperty(ints []int) bool {
-	h := toGenericSlice(ints)
-	MakeBinaryHeap(h, intLess)
-	return isHeap(h)
-}
-
 func TestHeapOrder(t *testing.T) {
-	if err := quick.Check(checkHeapProperty, nil); err != nil {
-		t.Error(err)
-	}
-}
-
-func checkMinProperty(ints []int) bool {
-	h := toGenericSlice(ints)
-	MakeBinaryHeap(h, intLess)
-	return intOrdered(h)
+	qc(t, func(ints []int) bool {
+		h := toGenericSlice(ints)
+		MakeBinaryHeap(h, intLess)
+		return isHeap(h)
+	})
 }
 
 func TestMinExtraction(t *testing.T) {
-	if err := quick.Check(checkMinProperty, nil); err != nil {
-		t.Error(err)
-	}
-}
-
-func checkIncrementalConstruction(ints []int) bool {
-	h := make([]interface{}, 0, len(ints))
-	for _, i := range ints {
-		h = HeapAdd(h, intLess, i)
-		if !isHeap(h) {
-			return false
-		}
-	}
-	return true
+	qc(t, func(ints []int) bool {
+		h := toGenericSlice(ints)
+		MakeBinaryHeap(h, intLess)
+		return intOrdered(h)
+	})
 }
 
 func TestIncrementalConstruction(t *testing.T) {
-	if err := quick.Check(checkIncrementalConstruction, nil); err != nil {
-		t.Error(err)
-	}
+	qc(t, func(ints []int) bool {
+		h := make([]interface{}, 0, len(ints))
+		for _, i := range ints {
+			h = HeapAdd(h, intLess, i)
+			if !isHeap(h) {
+				return false
+			}
+		}
+		return true
+	})
 }
