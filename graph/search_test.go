@@ -16,17 +16,17 @@ func newTraverser(n int, t *testing.T) *recordingTraverser {
 	return &recordingTraverser{o, p, t}
 }
 
-func (t *recordingTraverser) OnEnter(c *Context, v Vertex) {
+func (t *recordingTraverser) OnEnter(c Context, v Vertex) {
 	t.order = append(t.order, v)
 	if !c.IsDiscovered(v) {
 		t.test.Fatalf("Expected vertex %d to be discovered on enter", v)
 	}
 }
 
-func (t *recordingTraverser) OnEdge(c *Context, x, y Vertex) {
+func (t *recordingTraverser) OnEdge(c Context, x, y Vertex) {
 }
 
-func (t *recordingTraverser) OnExit(c *Context, v Vertex) {
+func (t *recordingTraverser) OnExit(c Context, v Vertex) {
 	if !c.IsDiscovered(v) {
 		t.test.Fatalf("Expected vertex %d to be discovered on exit", v)
 	}
@@ -36,7 +36,7 @@ func (t *recordingTraverser) OnExit(c *Context, v Vertex) {
 	t.parents[v] = c.ParentOf(v)
 }
 
-func (t *recordingTraverser) OnFinish(c *Context) {}
+func (t *recordingTraverser) OnFinish(c Context) {}
 
 func verifySearch(t *testing.T, ord, par []Vertex, trav *recordingTraverser) {
 	for i, v := range ord {

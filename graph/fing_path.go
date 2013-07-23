@@ -41,7 +41,7 @@ func ShortestPath(g Graph, start, end Vertex) (path []Vertex, err *NotReachableE
 	if !c.IsDiscovered(end) {
 		return nil, &NotReachableError{start, end}
 	}
-	return buildPath(c.parents, start, end), nil
+	return buildPath(c.(*SimpleContext).parents, start, end), nil
 }
 
 // DijkstraShortestPath implements Dijkstra's shortest path algorithm.

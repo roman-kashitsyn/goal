@@ -5,85 +5,110 @@ import (
 	"fmt"
 )
 
-// Context type represents traversal context. An instance of this type
-// is provided to any traverser during graph traversal.
-type Context struct {
-	parents []Vertex
-	discovered []bool
-	processed []bool
+type SearchFunc func(Graph, Vertex, Traverser, Context) Context
+
+// Context interface represents traversal context. An instance of this
+// interface is provided to any traverser during graph traversal.
+type Context interface {
+	ParentOf(v Vertex) Vertex
+	SetParent(v, p Vertex)
+
+	IsDiscovered(v Vertex) bool
+	MarkDiscovered(v Vertex)
+
+	IsProcessed(v Vertex) bool
+	MarkProcessed(v Vertex)
 }
 
 // Traverser represents a type that reacts on events fired during
 // graph traversal.
 type Traverser interface {
-	OnEnter(c *Context, v Vertex)
-	OnEdge(c *Context, x, y Vertex)
-	OnExit(c *Context, v Vertex)
-	OnFinish(c *Context)
+	OnEnter(c Context, v Vertex)
+	OnEdge(c Context, x, y Vertex)
+	OnExit(c Context, v Vertex)
+	OnFinish(c Context)
 }
 
-func makeContext(numVertices int) *Context {
+type SimpleContext struct {
+	parents []Vertex
+	discovered []bool
+	processed []bool
+}
+
+func makeContext(numVertices int) *SimpleContext {
 	parents := make([]Vertex, numVertices)
 	discovered := make([]bool, numVertices)
 	processed := make([]bool, numVertices)
-	return &Context{parents, discovered, processed}
+	return &SimpleContext{parents, discovered, processed}
 }
 
-func (c *Context) ParentOf(v Vertex) Vertex {
+func (c *SimpleContext) ParentOf(v Vertex) Vertex {
 	return c.parents[v]
 }
 
-func (c *Context) IsDiscovered(v Vertex) bool {
+func (c *SimpleContext) SetParent(v, p Vertex) {
+	c.parents[int(v)] = p
+}
+
+func (c *SimpleContext) IsDiscovered(v Vertex) bool {
 	return c.discovered[int(v)]
 }
 
-func (c *Context) IsProcessed(v Vertex) bool {
+func (c *SimpleContext) MarkDiscovered(v Vertex) {
+	c.discovered[int(v)] = true
+}
+
+func (c *SimpleContext) IsProcessed(v Vertex) bool {
 	return c.processed[int(v)]
+}
+
+func (c *SimpleContext) MarkProcessed(v Vertex) {
+	c.processed[int(v)] = true
 }
 
 type NoOpTraverser struct{}
 
-func (t NoOpTraverser) OnEnter(c *Context, v Vertex) {
+func (t NoOpTraverser) OnEnter(c Context, v Vertex) {
 }
 
-func (t NoOpTraverser) OnEdge(c *Context, x, y Vertex) {
+func (t NoOpTraverser) OnEdge(c Context, x, y Vertex) {
 }
 
-func (t NoOpTraverser) OnExit(c *Context, v Vertex) {
+func (t NoOpTraverser) OnExit(c Context, v Vertex) {
 }
 
-func (t NoOpTraverser) OnFinish(c *Context) {
+func (t NoOpTraverser) OnFinish(c Context) {
 }
 
 type PrintingTraverser struct{}
 
-func (t PrintingTraverser) OnEnter(c *Context, v Vertex) {
+func (t PrintingTraverser) OnEnter(c Context, v Vertex) {
 	fmt.Println("[+V] Entering vertex ", v)
 }
 
-func (t PrintingTraverser) OnEdge(c *Context, x, y Vertex) {
+func (t PrintingTraverser) OnEdge(c Context, x, y Vertex) {
 	fmt.Printf("[+E] Entering edge %v -> %v\n", x, y)
 }
 
-func (t PrintingTraverser) OnExit(c *Context, v Vertex) {
+func (t PrintingTraverser) OnExit(c Context, v Vertex) {
 	fmt.Println("[-V] Exiting vertex ", v)
 }
 
-func (t PrintingTraverser) OnFinish(c *Context) {
+func (t PrintingTraverser) OnFinish(c Context) {
 }
 
 // BreadthFirstSearch runs breadth-first search on a given graph.
 //
 // Time complexity: O(|E| + |V|) where |E| is number of graph edges
 // and |V| is number of graph vestices.
-func BreadthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
+func BreadthFirstSearch(g Graph, start Vertex, t Traverser) Context {
 	q := queue.NewLinkedQueue()
 	n := g.NumVertices()
 	c := makeContext(n)
 
 	q.Enqueue(start)
-	c.discovered[start] = true
-	c.parents[start] = start
+	c.MarkDiscovered(start)
+	c.SetParent(start, start)
 	directed := g.IsDirected()
 
 	for !q.Empty() {
@@ -91,16 +116,16 @@ func BreadthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
 		t.OnEnter(c, v)
 
 		for _, a := range g.AdjacentOf(v) {
-			if !c.processed[a] || directed {
+			if !c.IsProcessed(a) || directed {
 				t.OnEdge(c, v, a)
 			}
 			if !c.discovered[a] {
 				q.Enqueue(a)
-				c.discovered[a] = true
-				c.parents[a] = v
+				c.MarkDiscovered(a)
+				c.SetParent(a, v)
 			}
 		}
-		c.processed[v] = true
+		c.MarkProcessed(v)
 		t.OnExit(c, v)
 	}
 
@@ -113,30 +138,42 @@ func BreadthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
 //
 // Time complexity: O(|E| + |V|) where |E| is number of graph edges
 // and |V| is number of graph vestices.
-func DfsWithContext(g Graph, v Vertex, t Traverser, c *Context) *Context {
+func DfsWithContext(g Graph, v Vertex, t Traverser, c Context) Context {
 	if c == nil {
 		c = makeContext(g.NumVertices())
 	}
 
-	c.discovered[v] = true
+	c.MarkDiscovered(v)
 	t.OnEnter(c, v)
 
 	for _, a := range g.AdjacentOf(v) {
-		if !c.discovered[a] {
-			c.parents[a] = v
+		if !c.IsDiscovered(a) {
+			c.SetParent(a, v)
 			t.OnEdge(c, v, a)
 			DfsWithContext(g, a, t, c)
-		} else if !c.processed[a] || g.IsDirected() {
+		} else if !c.IsProcessed(a) || g.IsDirected() {
 			t.OnEdge(c, v, a)
 		}
 	}
 
-	c.processed[v] = true
+	c.MarkProcessed(v)
 	t.OnExit(c, v)
 	return c
 }
 
 // DepthFirstSearch runs depth-first search on a given graph.
-func DepthFirstSearch(g Graph, start Vertex, t Traverser) *Context {
+func DepthFirstSearch(g Graph, start Vertex, t Traverser) Context {
 	return DfsWithContext(g, start, t, nil)
+}
+
+func ScanAllVertices(g Graph, t Traverser, f SearchFunc) Context {
+	n := g.NumVertices()
+	c := makeContext(n)
+	for i := 0; i < n; i++ {
+		v := Vertex(i)
+		if !c.IsProcessed(v) {
+			f(g, v, t, c)
+		}
+	}
+	return c
 }
